@@ -1,5 +1,5 @@
 <div align=center>
-    <h1>ashen-image</h1>
+    <h1>mateus-image</h1>
 </div>
 
 ---
@@ -18,7 +18,7 @@ Firstly download CLI from releases (or compile from source).
 
 Then use CLI with `mateus-image --input=image.png --output=output.png` to transform your images. Use `--help` flag for more info
 
-ashen-color supports image formats supported by Rust's crate named "image", which supports most of formats you'd use
+mateus-image supports image formats supported by Rust's crate named "image", which supports most of formats you'd use
 
 # Credits
 
