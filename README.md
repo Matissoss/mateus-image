@@ -6,7 +6,7 @@
 
 # About
 
-mateus-image is simple CLI tool for changing any image's colors to be based on [my palette](https://github.com/Matissoss/palette)
+mateus-image is simple CLI tool for changing any image's colors to be based on [my colorscheme](https://github.com/Matissoss/colorscheme)
 
 # Examples
 
