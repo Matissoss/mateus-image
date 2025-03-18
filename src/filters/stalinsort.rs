@@ -10,8 +10,8 @@ use crate::filters::standard::StandardFilter;
 use std::collections::HashMap;
 
 impl ChangeImage for StalinsortFilter{
-    fn convert_image(&self,img: &mut ImageBuffer<Rgb<u8>,Vec<u8>>){
-        StandardFilter::convert_image(&StandardFilter,img);
+    fn convert_image(&self,img: &mut ImageBuffer<Rgb<u8>,Vec<u8>>, cl_scheme: &[Color]){
+        StandardFilter::convert_image(&StandardFilter,img,cl_scheme);
         let mut color_hashmap : HashMap<Color, u32> = HashMap::new();
         for pixel in img.pixels(){
             let color = Color{red:pixel.0[0],green:pixel.0[1],blue:pixel.0[2]};

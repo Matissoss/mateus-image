@@ -4,7 +4,6 @@ use image::*;
 use crate::filters::ChangeImage;
 use crate::filters::get_pixel;
 use crate::filters::change_color;
-use crate::PALETTE;
 use crate::color::Color;
 
 fn avg_rgb(values: &[Color]) -> Color {
@@ -20,7 +19,7 @@ fn avg_rgb(values: &[Color]) -> Color {
 }
 
 impl ChangeImage for MeanFilter{
-    fn convert_image(&self,img: &mut ImageBuffer<Rgb<u8>,Vec<u8>>){
+    fn convert_image(&self,img: &mut ImageBuffer<Rgb<u8>,Vec<u8>>, cl_scheme: &[Color]){
         let cloned_img = img.clone();
         let depth : u32 = self.0.into();
         for (x,y,pixel) in img.enumerate_pixels_mut(){
@@ -32,7 +31,7 @@ impl ChangeImage for MeanFilter{
                     }
                 }
             }
-            *pixel = image::Rgb(change_color(avg_rgb(&pxs), &PALETTE, std::cmp::Ordering::Less));
+            *pixel = image::Rgb(change_color(avg_rgb(&pxs), &cl_scheme, std::cmp::Ordering::Less));
         }
     }
 }

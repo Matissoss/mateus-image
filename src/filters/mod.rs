@@ -6,9 +6,11 @@ pub mod mean;
 pub mod median;
 pub mod stalinsort;
 pub mod pixel;
+pub mod ascii;
+pub mod binary;
 
 pub trait ChangeImage{
-    fn convert_image(&self,img: &mut image::ImageBuffer<image::Rgb<u8>,Vec<u8>>);
+    fn convert_image(&self,img: &mut image::ImageBuffer<image::Rgb<u8>,Vec<u8>>,cl_scheme:&[Color]);
 }
 
 #[inline(always)]

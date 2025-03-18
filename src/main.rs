@@ -1,61 +1,38 @@
-mod color;
 mod filters;
+mod color;
+mod cli;
+mod config;
 
 use color::Color;
-use filters::*;
-use stalinsort as stalin;
 
-use image;
+use filters::{
+    ChangeImage,
+    ascii       ::ASCIIFilter       ,
+    median      ::MedianFilter      ,
+    stalinsort  ::StalinsortFilter  ,
+    pixel       ::PixelFilter       ,
+    mean        ::MeanFilter        ,
+    standard    ::StandardFilter    ,
+    binary      ::BinaryFilter
+};
+
+use cli::{
+    Cli,
+    Flag
+};
+
+use image::{
+    self,
+    ImageReader
+};
+
 use std::{
-    env,
+    path::PathBuf,
+    process,
     fs
 };
 
-
-#[derive(PartialEq, Eq, Debug)]
-enum ImageFilter{
-    Median(u16),
-    Standard,
-    StalinSort(u16),
-    Pixel(u16),
-    Mean(u16)
-}
-
-#[derive(PartialEq, Eq)]
-enum Flag{
-    KeyValue(String, String),
-    LongFlag(String),
-    ShortFlag(String)
-}
-
-
-impl Flag{
-    fn from_vec(input: &[String]) -> Vec<Flag>{
-        let mut to_return = vec![];
-        for flag in input{
-            if flag.starts_with("--"){
-                if let Some((key,value)) = flag.split_once('='){
-                    to_return.push(Flag::KeyValue(key.to_string(), value.to_string()))
-                }
-                else{
-                    to_return.push(Flag::LongFlag(flag.to_string()));
-                }
-            }
-            else if flag.starts_with("-"){
-                if let Some((key,value)) = flag.split_once('='){
-                    to_return.push(Flag::KeyValue(key.to_string(), value.to_string()))
-                }
-                else{
-                    to_return.push(Flag::ShortFlag(flag.to_string()));
-                }
-            }
-        }
-        return to_return;
-    }
-}
-
-
-pub const PALETTE : [Color; 11] = 
+pub const DEF_SCHEME : [Color; 11] = 
 [
     // bg 
     Color::ctime_hex("121212"),
@@ -79,162 +56,134 @@ pub const PALETTE : [Color; 11] =
     Color::ctime_hex("B157D0"),
 ];
 
-fn search_kvflag(args: &[Flag], searched: &str) -> Option<String>{
-    for f in args{
-        match f {
-            Flag::KeyValue(key, value) => {
-                if key.as_str() == searched{
-                    return Some(value.to_string());
-                }
-            }
-            _ => continue
-        }
-    }
-    return None;
-}
+pub const MAIN_HELP     : &str = include_str!("help/help.txt");
 
-#[allow(unused)]
 fn main() {
-    let args = Flag::from_vec(&env::args().collect::<Vec<String>>());
+    let cli = Cli::init();
+    cli.debug("[main.rs]: initialized CLI");
 
-    if args.contains(&Flag::LongFlag("--help".to_string())) || args.contains(&Flag::ShortFlag("-h".to_string())){
-        println!(
-"mateus-image v1.2
-Flags:
---help      /-h                 : prints this message
---input     /-i=[IMAGE_PATH]
---output    /-o=[OUTPUT_PATH]
---standard  /-s                 : replaces unchanged pixel with closest one on palette
---stalinsort/-S                 : uses stalinsort-like filter to filter out rarest colors
---median    /-M                 : uses median pixel in area of (x,y) (DEPTH,DEPTH) from pixel
---mean      /-m                 : uses mathematic mean to choose pixel in area of (x,y) (DEPTH, DEPTH) 
-                                  from pixel
---pixel     /-p                 : pixelates image; To get good quality image, it's recommended to use stalinsort
-                                  filter after pixel one.
---depth=[DEPTH]                 : used by median filter;
-                                  used by stalinsort filter; declares how much of top colors will be chosen
-                                  used by mean filter;
-                                  used by pixel filter; specifies changed pixel size (x, y) : (depth, depth)
------
-made by matissoss and licensed under MIT License
-");
-        return;
+    let mut inpath  : Option<PathBuf>           = None;
+    let mut outpath : Option<PathBuf>           = None;
+    let mut param   : Option<u16>               = None;
+
+    if let Some(flag) = cli.get_flag("--input"){
+        if let Flag::KeyValue(_, path) = flag{
+            cli.debug("[main.rs]: found inpath; --input variant");
+            inpath = Some(PathBuf::from(path));
+        }
     }
-    let mut in_file_path = None;
-    let mut out_file_path = None;
+    else if let Some(flag) = cli.get_flag("-i"){
+        if let Flag::KeyValue(_, path) = flag{
+            cli.debug("[main.rs]: found inpath; -i variant");
+            inpath = Some(PathBuf::from(path));
+        }
+    }
+
+    if let Some(flag) = cli.get_flag("--output") {
+        if let Flag::KeyValue(_, path) = flag{
+            cli.debug("[main.rs]: found outpath; --output variant");
+            outpath = Some(PathBuf::from(path));
+        }
+    }
+    else if let Some(flag) = cli.get_flag("-o"){
+        if let Flag::KeyValue(_, path) = flag{
+            cli.debug("[main.rs]: found outpath; -o variant");
+            outpath = Some(PathBuf::from(path));
+        }
+    }
+
+
+    if let Some(flag) = cli.get_flag("--param") {
+        if let Flag::KeyValue(_, var) = flag{
+            cli.debug("[main.rs]: found param; --param variant");
+            if let Ok(n) = var.trim().parse::<u16>() {param = Some(n)}
+        }
+    }
+    else if let Some(flag) = cli.get_flag("-p"){
+        if let Flag::KeyValue(_, var) = flag{
+            cli.debug("[main.rs]: found param; -p variant");
+            if let Ok(n) = var.trim().parse::<u16>() {param = Some(n)}
+        }
+    }
+
+    if cli.contains_flag("help"){
+        println!("{}", MAIN_HELP);
+        process::exit(0);
+    }
     
-    let mut flag = ImageFilter::Standard;
-    for arg in &args{
-        if arg == &Flag::ShortFlag("-M".to_string()) || arg == &Flag::LongFlag("--median".to_string()){
-            let mut found = false;
-            if let Some(d) = search_kvflag(&args, "--depth"){
-                if let Ok(n) = d.trim().parse::<u16>(){
-                    flag = ImageFilter::Median(n);
-                    found = true;
-                    break;
-                }
-            }
-            if found {break}
-            flag = ImageFilter::Median(1);
-        }
-        else if arg == &Flag::ShortFlag("-m".to_string()) || arg == &Flag::LongFlag("--mean".to_string()){
-            let mut found = false;
-            if let Some(d) = search_kvflag(&args, "--depth"){
-                if let Ok(n) = d.trim().parse::<u16>(){
-                    flag = ImageFilter::Mean(n);
-                    found = true;
-                    break;
-                }
-            }
-            if found {break}
-            flag = ImageFilter::Mean(1);
-        }
-        else if arg == &Flag::ShortFlag("-p".to_string()) || arg == &Flag::LongFlag("--pixel".to_string()){
-            let mut found = false;
-            if let Some(d) = search_kvflag(&args, "--depth"){
-                if let Ok(n) = d.trim().parse::<u16>(){
-                    flag = ImageFilter::Pixel(n);
-                    found = true;
-                    break;
-                }
-            }
-            if found {break}
-            flag = ImageFilter::Pixel(1);
-        }
-        else if arg == &Flag::ShortFlag("-S".to_string()) || arg == &Flag::LongFlag("--stalinsort".to_string()){
-            let mut found = false;
-            if let Some(d) = search_kvflag(&args, "--depth"){
-                if let Ok(n) = d.trim().parse::<u16>(){
-                    flag = ImageFilter::StalinSort(n);
-                    found = true;
-                    break;
-                }
-            }
-            if found {break}
-            flag = ImageFilter::StalinSort(1);
-        }
-        match arg{ 
-            Flag::KeyValue(key, value) => {
-                match key.as_str() {
-                    "--input" | "-i" => {
-                        in_file_path = Some(value);
-                    }
-                    "--output" | "-o" => {
-                        out_file_path = Some(value);
-                    }
-                    _ => continue
-                }
-            }
-            _ => continue
+    let cl_scheme : Vec<Color> = if let Some(cfg) = &*config::CONFIG{
+        cfg.colors.clone()
+    }
+    else{
+        DEF_SCHEME.to_vec()
+    };
+    cli.debug(&format!("[main.rs]: color scheme\n{:?}",cl_scheme));
+    if let (Some(inpath), Some(param)) = (&inpath, param){
+        if cli.contains_flag("ascii"){
+            convert_image(&cli, &inpath, &PathBuf::new(), ASCIIFilter(param), &[]);
+            process::exit(0);
         }
     }
-    println!("Filter: {:?}", flag);
-    if let Some(image_path) = in_file_path{
-        if let Some(outpath) = out_file_path {
-            convert_image(&image_path, &outpath, flag);
+    if let (Some(inpath), Some(outpath)) = (inpath, outpath){
+        if cli.contains_flag("standard"){
+            convert_image(&cli, &inpath, &outpath, StandardFilter, &cl_scheme);
+        }
+        else if cli.contains_flag("binary"){
+            convert_image(&cli, &inpath, &outpath, BinaryFilter, &[]);
         }
         else{
-            convert_image(&image_path, "output.png", flag);
+            if let Some(param) = param{
+                if      cli.contains_flag("median"){
+                    convert_image(&cli, &inpath, &outpath, MedianFilter(param), &cl_scheme)
+                }
+                else if cli.contains_flag("mean") {
+                    convert_image(&cli, &inpath, &outpath, MeanFilter(param), &cl_scheme);
+                }
+                else if cli.contains_flag("pixel"){
+                    convert_image(&cli, &inpath, &outpath, PixelFilter(param), &cl_scheme);
+                }
+                else if cli.contains_flag("stalinsort"){
+                    convert_image(&cli, &inpath, &outpath, StalinsortFilter(param), &cl_scheme);
+                }
+            }
+            else{
+                println!("[main.rs]: --param isn't specified and you tried to use filter that uses it");
+                process::exit(-1);
+            }
         }
+    }
+    else{
+        println!("[main.rs]: either input path or output path or both haven't been provided");
+        process::exit(-1);
     }
 }
 
-fn convert_image(path: &str, outpath: &str, img_filter: ImageFilter){
-    if let Ok(true) = fs::exists(path){
-        if let Ok(img) = image::ImageReader::open(path){
+fn convert_image(cli: &Cli, inpath: &PathBuf, outpath: &PathBuf, filter: impl ChangeImage, color_scheme: &[Color]){
+    if let Ok(true) = fs::exists(inpath){
+        if let Ok(img) = ImageReader::open(inpath){
             match img.decode(){
                 Ok(dynimg) => {
-                    let mut rgb8_img = dynimg.to_rgb8();
-                    match img_filter{
-                        ImageFilter::Standard => {
-                            standard::StandardFilter::convert_image(&standard::StandardFilter, &mut rgb8_img)
-                        }
-                        ImageFilter::Mean(depth) => {
-                            mean::MeanFilter::convert_image(&mean::MeanFilter(depth),&mut rgb8_img);
-                        }
-                        ImageFilter::StalinSort(depth) => {
-                            stalin::StalinsortFilter::convert_image(&stalin::StalinsortFilter(depth),&mut rgb8_img);
-                        }
-                        ImageFilter::Pixel(depth) => {
-                            pixel::PixelFilter::convert_image(&pixel::PixelFilter(depth), &mut rgb8_img);
-                        }
-                        ImageFilter::Median(depth) => {
-                            median::MedianFilter::convert_image(&median::MedianFilter(depth),&mut rgb8_img);
-                        }
+                    let mut conv_img = dynimg.to_rgb8();
+                    filter.convert_image(&mut conv_img, color_scheme);
+                    if let Err(err) = conv_img.save(outpath){
+                        cli.debug(&format!("[main.rs]: couldn't save image, error:\n{}",err));
+                    } else {
+                        cli.debug(&format!("[main.rs]: sucessfully saved image to {:?}",outpath));
                     }
-                    match rgb8_img.save(outpath){
-                        Ok(_) => {
-                            println!("Converted `{}`; outpath=`{}`", path, outpath);
-                        }
-                        Err(e) => {
-                            println!("Save Error: {}",e);
-                        }
-                    };
                 }
-                Err(imgerr) => {
-                    println!("Decoding Error: {}", imgerr);
+                Err(err) => {
+                    println!("[main.rs]: failed to decode image:\n{}", err);
+                    process::exit(1);
                 }
             }
-        };
+        }
+        else{
+            println!("[main.rs]: ImageReader couldn't open file {:?}", inpath);
+            process::exit(1);
+        }
+    }
+    else{
+        println!("[main.rs]: image in path {:?} doesn't exist", inpath);
+        process::exit(1);
     }
 }
