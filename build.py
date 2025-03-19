@@ -42,7 +42,10 @@ def build_dev():
         try:
             os.makedirs("{}/{}".format(BUILD_DIR,target))
             sp.run(["cargo", "build", "--release", "--target", target])
-            shutil.move("target/{}/release/{}".format(target, PROJ_NAME), "{}/{}/{}".format(BUILD_DIR,target, PROJ_NAME))
+            if target == "x86_64-pc-windows-gnu":
+                shutil.move("target/{}/release/{}.exe".format(target,PROJ_NAME), "{}/{}/{}.exe".format(BUILD_DIR,target,PROJ_NAME))
+            else:
+                shutil.move("target/{}/release/{}".format(target, PROJ_NAME), "{}/{}/{}".format(BUILD_DIR,target, PROJ_NAME))
             sp.run(["tar", "-czf", "build/release/{}.tar.gz".format(target), "{}/{}".format(BUILD_DIR,target)])
             print("-------------------------------------------------------------------")
         except:
