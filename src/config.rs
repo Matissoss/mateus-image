@@ -1,6 +1,10 @@
-use crate::color::Color;
-use crate::cli::Cli;
-use crate::cli::Flag;
+use crate::{
+    cli::{
+        GLOBAL_CLI,
+        Flag
+    },
+    color::Color
+};
 
 use std::{
     env,
@@ -24,14 +28,14 @@ pub static CONFIG_PATH : LazyLock<Option<PathBuf>> = LazyLock::new(|| {
             Some(hdir.join(PathBuf::from(".config/mateus-image")))
         }
         else{
-            println!("[config.rs]: couldn't locate user directory");
+            GLOBAL_CLI.debug("[config.rs]: couldn't locate user directory");
             return None;
         }
     }
 });
 
 pub static CONFIG : LazyLock<Option<Config>> = LazyLock::new(|| {
-    let tmp_cli = Cli::init();
+    let tmp_cli = &*GLOBAL_CLI;
     if let Some(flg) = tmp_cli.get_flag("--color"){
         if let Flag::KeyValue(_, cols) = flg{
             return Some(Config{colors:parse_colors_from_csv(cols)})
@@ -49,19 +53,9 @@ pub static CONFIG : LazyLock<Option<Config>> = LazyLock::new(|| {
         }
     }
     else{
-        return get_config();
+        return Some(get_config());
     }
 });
-
-#[allow(unused)]
-pub fn check_conf() -> bool{
-    if let Some(_) = get_config(){
-        return true;
-    }
-    else{
-        return false
-    };
-}
 
 pub fn parse_csv(csv_str: &str) -> Vec<String>{
     let mut tmp_buf : Vec<char> = Vec::new();
@@ -89,6 +83,7 @@ pub fn parse_csv(csv_str: &str) -> Vec<String>{
     }
     return to_return;
 }
+
 pub fn parse_colors_from_csv(csv_str: &str) -> Vec<Color>{
     let mut colors = Vec::new();
     for color_str in parse_csv(csv_str){
@@ -99,7 +94,7 @@ pub fn parse_colors_from_csv(csv_str: &str) -> Vec<Color>{
     return colors;
 }
 
-pub fn parse_cfgstr(conf_str: &str) -> Option<Config>{
+pub fn parse_cfgstr(conf_str: &str) -> Config{
     let mut to_return = Config::default();
     for line in conf_str.lines().collect::<Vec<&str>>(){
         if line.starts_with("#"){
@@ -123,32 +118,19 @@ pub fn parse_cfgstr(conf_str: &str) -> Option<Config>{
             }
         }
     }
-    if to_return == Config::default(){
-        return None;
-    }
-    else{return Some(to_return);}
+    return to_return;
 }
 
-pub fn get_config() -> Option<Config>{
+pub fn get_config() -> Config{
     if let Some(pathbuf) = &*CONFIG_PATH{
         if let Ok(true) = fs::exists(pathbuf.join(PathBuf::from("conf.ini"))){
             if let Ok(conf_str) = fs::read_to_string(pathbuf.join(PathBuf::from("conf.ini"))){
                 return parse_cfgstr(&conf_str);
             }
-            else {return None;}
         }
         else{
-            println!("[config.rs]: config doesn't exist, create mateus-image directory");
-            return None;
+            GLOBAL_CLI.debug("[config.rs]: config doesn't exist, create mateus-image directory");
         }
-    } else {return None};
-}
-
-#[cfg(test)]
-mod tests{
-    use super::*;
-    #[test]
-    fn test(){
-        assert_eq!(vec!["hello".to_string(),"world".to_string()],parse_csv("hello,world"))
     }
+    return Config{colors: crate::DEF_SCHEME.to_vec()};
 }

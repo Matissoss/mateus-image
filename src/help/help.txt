@@ -1,4 +1,4 @@
-mateus-image v1.3.0
+mateus-image v1.4.1
 ===================
 USAGE:
 mateus-image [METHOD] [FLAGS]
@@ -15,6 +15,8 @@ binary      -   chooses 2 most often colors and changes
                 rest to be one of them
 ascii       -   returns image as string in printable ascii
 		letters
+monochrome  -	makes image monochrome
+extras-1    -	makes image darker
 -------------------
 FLAGs:
 --param/-p=[VALUE]	- 	param is used to customize filters;

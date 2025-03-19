@@ -1,22 +1,25 @@
-# Configuration on Windows
+# Configuration
 
-I don't officially support config on **Windows** as it has non-XDG-compatible paths. Only way to configure is with `--colors`/`-c` flag/s.
+## Linux/UNIX-like
 
-# Configuration On Linux
+To configure `mateus-image` on Linux there are 2 methods: through flags (temporary) or through config file.
 
-Configuration on Linux on the other hand is easy as it has XDG-compatible paths. Config can be ussually found in `.config/mateus-image` directory. Create `conf.ini` file.
+Config file can be found in following directory: `~/.config/mateus-image` named `conf.ini`
 
-Example **conf.ini**
-
+**Example conf.ini file**
 ```
 # Comment
-# 
-# colors = #FFFFFF, #000000
-# colors_path = colorscheme.csv
+#   colors = [CSV_STRING]   : overrides default colorscheme
+#   colors_path = [PATH]    : overrides default colorscheme with file found in: `~/.config/mateus-image`.
+colors_path = colors.csv
 ```
 
-- `colors` define colors in `csv` format
-- `colors_path` define where color scheme is stored it MUST BE IN `.config/mateus-image` DIRECTORY, otherwise it won't work
+**Example colors.csv file**
+```
+#000000,#00FF00
+```
 
->![WARNING]
-> Due to some bug in `src/config.rs`, if you use `colors_path` file must end with `,` at the end. This will be fixed soon
+## Windows
+
+There are no plans for officially supporting Windows through `conf.ini` file, because Windows isn't compatible with XDG paths.
+Only way is through flags.

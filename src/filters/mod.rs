@@ -1,33 +1,23 @@
-use crate::Color;
+use crate::color::Color;
 use std::cmp::Ordering;
 
-pub mod standard;
-pub mod mean;
-pub mod median;
-pub mod stalinsort;
-pub mod pixel;
-pub mod ascii;
-pub mod binary;
+pub mod standard    ;
+pub mod mean        ;
+pub mod median      ;
+pub mod stalinsort  ;
+pub mod pixel       ;
+pub mod ascii       ;
+pub mod binary      ;
+pub mod inversion   ;
+pub mod monochrome  ;
 
 pub trait ChangeImage{
-    fn convert_image(&self,img: &mut image::ImageBuffer<image::Rgb<u8>,Vec<u8>>,cl_scheme:&[Color]);
-}
-
-#[inline(always)]
-pub fn get_pixel(img: &image::ImageBuffer<image::Rgb<u8>, Vec<u8>>, pos: (u32,u32)) -> Option<[u8; 3]>{
-    let (w,h) = img.dimensions();
-    if w > pos.0 && h > pos.1{return Some(img.get_pixel(pos.0, pos.1).0);}
-    else{return None;}
-}
-#[inline(always)]
-pub fn get_pixel_mut(img: &mut image::ImageBuffer<image::Rgb<u8>, Vec<u8>>, pos: (u32,u32)) -> Option<&mut image::Rgb<u8>>{
-    let (w,h) = img.dimensions();
-    if w > pos.0 && h > pos.1{return Some(img.get_pixel_mut(pos.0, pos.1));}
-    else{return None;}
+    fn convert_image(&self, img: &mut image::ImageBuffer<image::Rgb<u8>, Vec<u8>>, cl_scheme:&[Color]);
 }
 
 pub fn quicksort<T>(input: &Vec<T>) -> Vec<T>
-where T: PartialEq + std::cmp::PartialOrd + Clone{
+where T: PartialEq + std::cmp::PartialOrd + Clone
+{
     if input.len() <= 1 {return input.to_vec()}
     let pivot = &input[input.len()-1];
     let mut veca :Vec<T> = vec![];

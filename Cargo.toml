@@ -1,9 +1,12 @@
 [package]
-name = "mateus-image"
-version = "1.4.0"
-edition = "2021"
-description = "simple CLI program to make colors of image to be Matissoss' colorscheme"
-license = "MIT"
+name 		= "mateus-image"
+version 	= "1.4.1"
+edition 	= "2021"
+authors		= ["matissoss <matissossgamedev@proton.me>"]
+description 	= "Simple CLI program for image manipulation"
+keywords	= ["cli","image","image-manipulation",""]
+repository	= "https://github.com/Matissoss/mateus-image"
+license 	= "MIT"
 
 [dependencies]
 image = "0.25.5"

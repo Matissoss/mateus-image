@@ -1,3 +1,9 @@
+use std::sync::LazyLock;
+
+pub static GLOBAL_CLI : LazyLock<Cli> = LazyLock::new(|| {
+    return Cli::init();
+});
+
 #[derive(Hash, Eq, PartialEq)]
 pub enum Flag{
     KeyValue(String, String),
@@ -6,7 +12,7 @@ pub enum Flag{
 }
 
 impl Flag{
-    fn cmp_flag(&self, flag: &str) -> bool{
+    fn is_equal(&self, flag: &str) -> bool{
         match self{
             Flag::Flag(str) => str == flag,
             Flag::KeyValue(key, _) => key == flag,
@@ -54,7 +60,7 @@ impl Cli{
     }
     pub fn contains_flag(&self, flag_str: &str) -> bool{
         for flag in &self.args{
-            if flag.cmp_flag(flag_str){
+            if flag.is_equal(flag_str){
                 return true;
             }
         }
@@ -62,7 +68,7 @@ impl Cli{
     }
     pub fn get_flag(&self, flag_str: &str) -> Option<&Flag>{
         for flag in &self.args{
-            if flag.cmp_flag(flag_str){
+            if flag.is_equal(flag_str){
                 return Some(flag);
             }
         }

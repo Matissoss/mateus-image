@@ -1,7 +1,7 @@
-mod filters;
-mod color;
-mod cli;
-mod config;
+mod filters ;
+mod color   ;
+mod cli     ;
+mod config  ;
 
 use color::Color;
 
@@ -13,11 +13,13 @@ use filters::{
     pixel       ::PixelFilter       ,
     mean        ::MeanFilter        ,
     standard    ::StandardFilter    ,
-    binary      ::BinaryFilter
+    binary      ::BinaryFilter      ,
+    inversion   ::InversionFilter   ,
+    monochrome  ::MonochromeFilter  ,
 };
 
 use cli::{
-    Cli,
+    GLOBAL_CLI,
     Flag
 };
 
@@ -59,7 +61,7 @@ pub const DEF_SCHEME : [Color; 11] =
 pub const MAIN_HELP     : &str = include_str!("help/help.txt");
 
 fn main() {
-    let cli = Cli::init();
+    let cli = &*GLOBAL_CLI;
     cli.debug("[main.rs]: initialized CLI");
 
     let mut inpath  : Option<PathBuf>           = None;
@@ -117,33 +119,42 @@ fn main() {
     else{
         DEF_SCHEME.to_vec()
     };
+
     cli.debug(&format!("[main.rs]: color scheme\n{:?}",cl_scheme));
+    
     if let (Some(inpath), Some(param)) = (&inpath, param){
         if cli.contains_flag("ascii"){
-            convert_image(&cli, &inpath, &PathBuf::new(), ASCIIFilter(param), &[]);
+            convert_image(&inpath, &PathBuf::new(), ASCIIFilter(param), &[]);
             process::exit(0);
         }
     }
+
     if let (Some(inpath), Some(outpath)) = (inpath, outpath){
         if cli.contains_flag("standard"){
-            convert_image(&cli, &inpath, &outpath, StandardFilter, &cl_scheme);
+            convert_image(&inpath, &outpath, StandardFilter, &cl_scheme);
         }
         else if cli.contains_flag("binary"){
-            convert_image(&cli, &inpath, &outpath, BinaryFilter, &[]);
+            convert_image(&inpath, &outpath, BinaryFilter, &cl_scheme);
+        }
+        else if cli.contains_flag("monochrome"){
+            convert_image(&inpath, &outpath, MonochromeFilter, &cl_scheme);
+        }
+        else if cli.contains_flag("extras-1"){
+            convert_image(&inpath, &outpath, InversionFilter, &[]);
         }
         else{
             if let Some(param) = param{
                 if      cli.contains_flag("median"){
-                    convert_image(&cli, &inpath, &outpath, MedianFilter(param), &cl_scheme)
+                    convert_image(&inpath, &outpath, MedianFilter(param), &cl_scheme)
                 }
                 else if cli.contains_flag("mean") {
-                    convert_image(&cli, &inpath, &outpath, MeanFilter(param), &cl_scheme);
+                    convert_image(&inpath, &outpath, MeanFilter(param), &cl_scheme);
                 }
                 else if cli.contains_flag("pixel"){
-                    convert_image(&cli, &inpath, &outpath, PixelFilter(param), &cl_scheme);
+                    convert_image(&inpath, &outpath, PixelFilter(param), &cl_scheme);
                 }
                 else if cli.contains_flag("stalinsort"){
-                    convert_image(&cli, &inpath, &outpath, StalinsortFilter(param), &cl_scheme);
+                    convert_image(&inpath, &outpath, StalinsortFilter(param), &cl_scheme);
                 }
             }
             else{
@@ -153,12 +164,13 @@ fn main() {
         }
     }
     else{
-        println!("[main.rs]: either input path or output path or both haven't been provided");
+        println!("[main.rs]: either input path or output path or both haven't been provided. use `help`");
         process::exit(-1);
     }
 }
 
-fn convert_image(cli: &Cli, inpath: &PathBuf, outpath: &PathBuf, filter: impl ChangeImage, color_scheme: &[Color]){
+fn convert_image(inpath: &PathBuf, outpath: &PathBuf, filter: impl ChangeImage, color_scheme: &[Color]){
+    let cli = &*GLOBAL_CLI;
     if let Ok(true) = fs::exists(inpath){
         if let Ok(img) = ImageReader::open(inpath){
             match img.decode(){

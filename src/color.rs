@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Clone, PartialOrd, Eq, Hash,Copy)]
+#[derive(Ord,Debug, PartialEq, Clone, PartialOrd, Eq, Hash,Copy)]
 pub struct Color{
     pub red: u8,
     pub green: u8,
@@ -6,6 +6,23 @@ pub struct Color{
 }
 
 impl Color{
+    #[inline(always)]
+    pub fn lumination(&self) -> u8{
+        return ((self.red as f32 * 0.299 + self.green as f32 * 0.587 + self.blue as f32 * 0.114)
+            .floor() as u32 & 0xFF).try_into().unwrap();
+    }
+
+    pub fn avg_rgb(values: &[Color]) -> Color {
+        let mut avg = [0u16; 3];
+
+        for (i, val) in values.iter().enumerate() {
+            avg[0] += (val.red   as u16).wrapping_sub(avg[0]) / (i as u16 + 1);
+            avg[1] += (val.blue  as u16).wrapping_sub(avg[1]) / (i as u16 + 1);
+            avg[2] += (val.green as u16).wrapping_sub(avg[2]) / (i as u16 + 1);
+        }
+
+        Color{red:avg[0] as u8, green:avg[1] as u8, blue:avg[2] as u8}
+    }
     pub fn from_hex(hex: &str) -> Option<Color>{
         if hex.starts_with('#'){
             return Self::from_hex(&hex[1..]);
@@ -34,6 +51,9 @@ impl Color{
             }
         }
     }
+    pub fn from_arr(arr: &[u8;3]) -> Color{
+        return Color{red:arr[0],green:arr[1],blue:arr[2]};
+    }
 }
 
 const fn from_hexchar(h: char) -> u8{
@@ -45,40 +65,19 @@ const fn from_hexchar(h: char) -> u8{
         'd'|'D' => 13,
         'e'|'E' => 14,
         'f'|'F' => 15,
-        _       => 16
+        _       => 0
     }
-}
-
-const fn chararr_from_color(s: &'static str) -> [char;6]{
-    let bytes = s.as_bytes();
-    let mut to_ret : [char;6] = [' ';6];
-    let mut i = 0;
-    while i < bytes.len() && i < 6{
-        to_ret[i] = bytes[i] as char;
-        i+=1;
-    }
-    return to_ret;
 }
 
 impl Color{
     pub const fn ctime_hex(inp : &'static str) -> Color{
-        let hex = chararr_from_color(inp);
+        let hex = inp.as_bytes();
         let (red, green, blue) : (u8,u8,u8) = 
         (
-            from_hexchar(hex[0]) * 16 + from_hexchar(hex[1]),
-            from_hexchar(hex[2]) * 16 + from_hexchar(hex[3]),
-            from_hexchar(hex[4]) * 16 + from_hexchar(hex[5]),
+            from_hexchar(hex[0] as char) * 16 + from_hexchar(hex[1] as char),
+            from_hexchar(hex[2] as char) * 16 + from_hexchar(hex[3] as char),
+            from_hexchar(hex[4] as char) * 16 + from_hexchar(hex[5] as char),
         );
         return Color{red,green,blue};
-    }
-}
-
-#[cfg(test)]
-mod tests{
-    use super::*;
-    #[test]
-    fn test(){
-        let color = Color::ctime_hex("121212");
-        assert!(color == Color{red:18,green:18,blue:18});
     }
 }

@@ -4,24 +4,32 @@
 
 ---
 
-# About
+# About Project
 
-mateus-image is simple CLI tool for changing any image's colors to be based on [my colorscheme](https://github.com/Matissoss/colorscheme)
-
-# Config
-
-config is supported since mateus-image `v1.3.0`. For more info check out [CONFIG.md](CONFIG.md)
+`mateus-image` is simple CLI program for image manipulation using [*filters*](src/filters). 
+Originally it was made for colorscheme named ashen, but now it defaultly supports [my colorscheme](https://github.com/Matissoss/colorscheme)
 
 # Examples
 
-Examples can be found in my other repo: [mateus-wallpapers](https://github.com/Matissoss/mateus-wallpapers)
+Example images changed by `mateus-image` can be found in [my other repo](https://github.com/Matissoss/mateus-wallpaper)
 
-# Setup
+# Install
 
-mateus-image can be downloaded using cargo: `cargo install mateus-image`, pre-compiled binaries from releases section or from source using `build.py` script
+`mateus-image` is available through:
+- **cargo** : `cargo install mateus-image`
+- **precompiled bins** : download from `Releases` section
+- **from source** : requires `cargo`, `python3` (optional) and `git` (optional) ; use [`build`](build.py) or `cargo build --release`
 
-use `--help` or `-h` flag to get more info
+# Usage
+
+To get more info use `mateus-image help`
+
+# Configuration
+
+`mateus-image` supports configuration since version `v1.3.0` on systems that have `~/.config`, so on systems that aren't windows. Check [CONFIG.md](CONFIG.md) for more info.
 
 # Credits
 
-mateus-image was made by matissoss using rust-lang and is licensed under MIT License
+made by Matissoss [matissossgamedev@proton.me]
+
+licensed under MIT License
