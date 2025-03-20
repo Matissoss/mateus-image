@@ -1,4 +1,4 @@
-mateus-image v1.4.1
+mateus-image v1.4.2
 ===================
 USAGE:
 mateus-image [METHOD] [FLAGS]
@@ -29,7 +29,7 @@ FLAGs:
 				saved
 --color/-c=[COLORS]	-	makes program use colors specified by this
 				flag. Colors must be split by ',' like in .csv format
-				and saved in hex format (ex. "#F5F5F5")
+				and saved in hex format (ex. "#F5F5F5", "#000")
 -------------------
-made by matissoss,
+made by matissoss <matissossgamedev@proton.me>
 licensed under MIT

@@ -24,12 +24,12 @@ impl ChangeImage for InversionFilter{
         }
         for pixel in img.pixels_mut(){
             if (pixel.0[0] as u16 + pixel.0[1] as u16 + pixel.0[2] as u16)
-                < (max.1.red as u16 + max.1.green as u16 + max.1.blue as u16)
+                < (max.1.r as u16 + max.1.g as u16 + max.1.b as u16)
             {
-                *pixel = image::Rgb([max.1.red-pixel.0[0], max.1.green-pixel.0[1],max.1.blue-pixel.0[2]]);
+                *pixel = image::Rgb([max.1.r-pixel.0[0], max.1.g-pixel.0[1],max.1.b-pixel.0[2]]);
             }
             else{
-                *pixel = image::Rgb([pixel.0[0] - max.1.red, pixel.0[1] - max.1.green, pixel.0[2] - max.1.blue]);
+                *pixel = image::Rgb([pixel.0[0] - max.1.r, pixel.0[1] - max.1.g, pixel.0[2] - max.1.b]);
             }
         }
     }

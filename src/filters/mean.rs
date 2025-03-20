@@ -2,10 +2,7 @@ pub struct MeanFilter(pub u16);
 
 use image;
 use crate::{
-    filters::{
-        ChangeImage,
-        change_color
-    },
+    filters::ChangeImage,
     color::Color
 };
 
@@ -18,11 +15,11 @@ impl ChangeImage for MeanFilter{
             for y1 in y-depth..y+depth{
                 for x1 in x-depth..x+depth{
                     if let Some(cl) = cloned_img.get_pixel_checked(x1,y1){
-                        pxs.push(Color{red:cl[0],green:cl[1],blue:cl[2]});
+                        pxs.push(Color::from_arr(&cl.0));
                     }
                 }
             }
-            *pixel = image::Rgb(change_color(Color::avg_rgb(&pxs), &cl_scheme, std::cmp::Ordering::Less));
+            *pixel = image::Rgb(Color::avg_rgb(&pxs).change_color(&cl_scheme));
         }
     }
 }

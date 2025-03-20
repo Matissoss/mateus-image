@@ -3,10 +3,7 @@ pub struct MonochromeFilter;
 use std::collections::HashMap;
 
 use crate::{
-    filters::{
-        ChangeImage,
-        change_color
-    },
+    filters::ChangeImage,
     cli::GLOBAL_CLI,
     color::Color
 };
@@ -24,7 +21,7 @@ impl ChangeImage for MonochromeFilter{
                 px_map.insert(color, 1);
             }
         }
-        let mut max = (0, Color{red:0,green:0,blue:0});
+        let mut max = (0, Color{r:0,g:0,b:0});
         for key in px_map.keys(){
             if let Some(vl) = px_map.get(key){
                 if max.0 < *vl{
@@ -32,10 +29,10 @@ impl ChangeImage for MonochromeFilter{
                 }
             }
         }
-        max.1 = Color::from_arr(&change_color(max.1, cl, std::cmp::Ordering::Less));
+        max.1 = Color::from_arr(&max.1.change_color(&cl));
         drop(px_map);
         let maxlum = Color::lumination(&max.1);
-        cli.debug(&format!("[monochrome.rs]: max = ({}, {}, {}), lumination: {}",max.1.red,max.1.green,max.1.blue,maxlum));
+        cli.debug(&format!("[monochrome.rs]: max = ({}, {}, {}), lumination: {}",max.1.r,max.1.g,max.1.b,maxlum));
         for pixel in img.pixels_mut(){
             let tmp_lum = maxlum / Color::lumination(&Color::from_arr(&pixel.0));
             *pixel = image::Rgb([pixel.0[0] * tmp_lum, pixel.0[1] * tmp_lum, pixel.0[2] * tmp_lum]);

@@ -3,10 +3,7 @@ pub struct PixelFilter(pub u16);
 use image;
 
 use crate::{
-    filters::{
-        ChangeImage,
-        change_color
-    },
+    filters::ChangeImage,
     color::Color
 };
 
@@ -22,7 +19,7 @@ impl ChangeImage for PixelFilter{
                 for y1 in y-depth_u32..y{
                     for x1 in x-depth_u32..x{
                         if let Some(cl) = img.get_pixel_checked(x1,y1){
-                            pxs.push(Color{red:cl[0],green:cl[1],blue:cl[2]});
+                            pxs.push(Color::from_arr(&cl.0));
                         }
                     }
                 }
@@ -30,12 +27,11 @@ impl ChangeImage for PixelFilter{
                 for y1 in y-depth_u32..y{
                     for x1 in x-depth_u32..x{
                         if let Some(px) = img.get_pixel_mut_checked(x1,y1){
-                            *px = image::Rgb(change_color(avg, &cl_scheme, std::cmp::Ordering::Less));
+                            *px = image::Rgb(avg.change_color(&cl_scheme));
                         }
                     }
                 }
             }
         }
-
     }
 }

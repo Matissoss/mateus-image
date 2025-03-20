@@ -120,7 +120,10 @@ fn main() {
         DEF_SCHEME.to_vec()
     };
 
-    cli.debug(&format!("[main.rs]: color scheme\n{:?}",cl_scheme));
+    cli.debug("[main.rs]: colorscheme:");
+    for c in &cl_scheme{
+        cli.debug(&format!("{}", c.to_string()));
+    }
     
     if let (Some(inpath), Some(param)) = (&inpath, param){
         if cli.contains_flag("ascii"){

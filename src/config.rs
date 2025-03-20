@@ -38,7 +38,7 @@ pub static CONFIG : LazyLock<Option<Config>> = LazyLock::new(|| {
     let tmp_cli = &*GLOBAL_CLI;
     if let Some(flg) = tmp_cli.get_flag("--color"){
         if let Flag::KeyValue(_, cols) = flg{
-            return Some(Config{colors:parse_colors_from_csv(cols)})
+            return Some(Config{colors:parse_colors_from_csv(&cols)})
         }
         else{
             return None;
@@ -46,7 +46,7 @@ pub static CONFIG : LazyLock<Option<Config>> = LazyLock::new(|| {
     }
     else if let Some(flg) = tmp_cli.get_flag("-c"){
         if let Flag::KeyValue(_, cols) = flg{
-            return Some(Config{colors:parse_colors_from_csv(cols)})
+            return Some(Config{colors:parse_colors_from_csv(&cols)})
         }
         else{
             return None;
@@ -97,7 +97,7 @@ pub fn parse_colors_from_csv(csv_str: &str) -> Vec<Color>{
 pub fn parse_cfgstr(conf_str: &str) -> Config{
     let mut to_return = Config::default();
     for line in conf_str.lines().collect::<Vec<&str>>(){
-        if line.starts_with("#"){
+        if line.starts_with(";"){
             continue;
         }
         if let Some((key,value)) = line.split_once('='){
@@ -129,7 +129,7 @@ pub fn get_config() -> Config{
             }
         }
         else{
-            GLOBAL_CLI.debug("[config.rs]: config doesn't exist, create mateus-image directory");
+            GLOBAL_CLI.debug("[config.rs]: config doesn't exist, create mateus-image directory or conf.ini file");
         }
     }
     return Config{colors: crate::DEF_SCHEME.to_vec()};

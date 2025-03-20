@@ -5,7 +5,6 @@ use image;
 use crate::{
     filters::{
         ChangeImage,
-        change_color,
         quicksort
     },
     color::Color
@@ -26,10 +25,10 @@ impl ChangeImage for MedianFilter{
             }
             let sorted = quicksort(&pxs);
             if let Some(px) = sorted.get(sorted.len()/2){
-                *pixel = image::Rgb(change_color(*px, &cl_scheme, std::cmp::Ordering::Less));
+                *pixel = image::Rgb(px.change_color(&cl_scheme));
             }
             else{
-                *pixel = image::Rgb(change_color(Color::from_arr(&pixel.0), &cl_scheme, std::cmp::Ordering::Less));
+                *pixel = image::Rgb(Color::from_arr(&pixel.0).change_color(&cl_scheme));
             }
         }
     }

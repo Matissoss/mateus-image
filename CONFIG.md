@@ -8,9 +8,9 @@ Config file can be found in following directory: `~/.config/mateus-image` named 
 
 **Example conf.ini file**
 ```
-# Comment
-#   colors = [CSV_STRING]   : overrides default colorscheme
-#   colors_path = [PATH]    : overrides default colorscheme with file found in: `~/.config/mateus-image`.
+; Comment
+;   colors = [CSV_STRING]   : overrides default colorscheme
+;   colors_path = [PATH]    : overrides default colorscheme with file found in: `~/.config/mateus-image`.
 colors_path = colors.csv
 ```
 

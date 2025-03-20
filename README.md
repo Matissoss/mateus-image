@@ -18,7 +18,7 @@ Example images changed by `mateus-image` can be found in [my other repo](https:/
 `mateus-image` is available through:
 - **cargo** : `cargo install mateus-image`
 - **precompiled bins** : download from `Releases` section
-- **from source** : requires `cargo`, `python3` (optional) and `git` (optional) ; use [`build`](build.py) or `cargo build --release`
+- **from source** : requires `cargo`, `python3` (optional) and `git` (optional) ; use [`build.py`](build.py) or `cargo build --release`
 
 # Usage
 

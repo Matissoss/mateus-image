@@ -5,11 +5,7 @@ use image;
 use std::collections::BTreeMap;
 
 use crate::{
-    filters::{
-        ChangeImage,
-        change_color,
-        quicksort
-    },
+    filters::{ChangeImage,quicksort},
     cli::GLOBAL_CLI,
     color::Color
 };
@@ -42,11 +38,10 @@ impl ChangeImage for BinaryFilter{
             max_2   = cls_sorted[1];
         }
 
-        cli.debug(&format!("[binary.rs]: max_1 = ({}, {}, {}); max_2 = ({}, {}, {})",
-            max_1.1.red,max_1.1.green,max_1.1.blue,max_2.red,max_2.green,max_2.blue));
+        cli.debug(&format!("[binary.rs]: max_1 = {}; max_2 = {}",
+            max_1.1.to_string(),max_2.to_string()));
         for pixel in img.pixels_mut(){
-            *pixel = image::Rgb(
-                change_color(Color::from_arr(&pixel.0), &[max_1.1, max_2], std::cmp::Ordering::Less));
+            *pixel = image::Rgb(Color::from_arr(&pixel.0).change_color(&[max_1.1, max_2]));
         }
     }
 }
