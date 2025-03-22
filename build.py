@@ -1,14 +1,17 @@
 #!/bin/python3
 
-import getpass
-import os
-import shutil
-import subprocess as sp
+import getpass      as gp
+import os           as os
+import shutil       as sh
+import subprocess   as sp
 
-RUST_TARGETS = ["x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-gnu"]
-USER = getpass.getuser()
-PROJ_NAME = "mateus-image"
-BUILD_DIR = "build"
+USER        = gp.getuser()
+
+PROJ_NAME   = "mateus-image"
+BUILD_DIR   = "build"
+
+RUST_TARGETS    = ["x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-gnu"]
+SEPARATOR       = "-------------------------------------------------------------------"
 
 def allowed(text, yes, no) -> bool:
     input_string = input("[{}/{}]: {}".format(yes,no,text))
@@ -24,8 +27,14 @@ def allowed(text, yes, no) -> bool:
 
 def chosen(text, opts):
     opt_string = ""
+    i = 0
+    opts_len = len(opts)
     for opt in opts:
-        opt_string += opt + "/"
+        if i+1 == opts_len:
+            opt_string += opt
+        else:
+            opt_string += opt + "/"
+        i += 1
     input_format = "{} [{}]\n> ".format(text,opt_string)
     input_string = input(input_format)
     for opt in opts:
@@ -35,7 +44,7 @@ def chosen(text, opts):
 
 def build_dev():
     if os.path.exists(BUILD_DIR):
-        shutil.rmtree(BUILD_DIR)
+        sh.rmtree(BUILD_DIR)
     os.makedirs(BUILD_DIR)
     os.makedirs("{}/release".format(BUILD_DIR))
     for target in RUST_TARGETS:
@@ -43,21 +52,21 @@ def build_dev():
             os.makedirs("{}/{}".format(BUILD_DIR,target))
             sp.run(["cargo", "build", "--release", "--target", target])
             if target == "x86_64-pc-windows-gnu":
-                shutil.move("target/{}/release/{}.exe".format(target,PROJ_NAME), "{}/{}/{}.exe".format(BUILD_DIR,target,PROJ_NAME))
+                sh.move("target/{}/release/{}.exe".format(target,PROJ_NAME), "{}/{}/{}.exe".format(BUILD_DIR,target,PROJ_NAME))
             else:
-                shutil.move("target/{}/release/{}".format(target, PROJ_NAME), "{}/{}/{}".format(BUILD_DIR,target, PROJ_NAME))
+                sh.move("target/{}/release/{}".format(target, PROJ_NAME), "{}/{}/{}".format(BUILD_DIR,target, PROJ_NAME))
             sp.run(["tar", "-czf", "build/release/{}.tar.gz".format(target), "{}/{}".format(BUILD_DIR,target)])
-            print("-------------------------------------------------------------------")
+            print(SEPARATOR)
         except:
             print("Couldn't build for target {}".format(target))
-            print("-------------------------------------------------------------------")
+            print(SEPARATOR)
 
 def build_local():
     sp.run(["cargo", "build", "--release"])
-    print("-------------------------------------------------------------------")
-    if allowed("Do you want to put executable in ~/.local/bin? (recommended on Linux)\n> ".format(PROJ_NAME),'y','n'):
+    print(SEPARATOR)
+    if allowed("Do you want to put executable in ~/.local/bin?\n> ".format(PROJ_NAME),'y','n'):
         try:
-            shutil.move("target/release/{}".format(PROJ_NAME), "/home/{}/.local/bin/{}".format(USER,PROJ_NAME))
+            sh.move("target/release/{}".format(PROJ_NAME), "/home/{}/.local/bin/{}".format(USER,PROJ_NAME))
             print("Sucessfully done!")
         except:
             print("Something went wrong...\nTip: check if you have .local/bin directory in your home directory and if something still doesn't work then open a issue on github")
@@ -74,10 +83,10 @@ def main():
     print("===================================================================")
     opt = chosen("Do you want local build or a dev build? (local build reccomended)", ['l','d'])
     if opt == 'l':
-        print("-------------------------------------------------------------------")
+        print(SEPARATOR)
         build_local()
     elif opt == 'd':
-        print("-------------------------------------------------------------------")
+        print(SEPARATOR)
         build_dev()
     else:
         print("aborting build process!")

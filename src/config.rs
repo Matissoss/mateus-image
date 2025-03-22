@@ -36,15 +36,7 @@ pub static CONFIG_PATH : LazyLock<Option<PathBuf>> = LazyLock::new(|| {
 
 pub static CONFIG : LazyLock<Option<Config>> = LazyLock::new(|| {
     let tmp_cli = &*GLOBAL_CLI;
-    if let Some(flg) = tmp_cli.get_flag("--color"){
-        if let Flag::KeyValue(_, cols) = flg{
-            return Some(Config{colors:parse_colors_from_csv(&cols)})
-        }
-        else{
-            return None;
-        }
-    }
-    else if let Some(flg) = tmp_cli.get_flag("-c"){
+    if let Some(flg) = tmp_cli.get_flag("-c"){
         if let Flag::KeyValue(_, cols) = flg{
             return Some(Config{colors:parse_colors_from_csv(&cols)})
         }

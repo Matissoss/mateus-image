@@ -10,11 +10,27 @@ pub static GLOBAL_CLI : LazyLock<Cli> = LazyLock::new(|| {
     return Cli::init();
 });
 
-#[derive(Hash, Eq, PartialEq, Clone)]
+#[derive(Hash,Clone)]
 pub enum Flag{
     KeyValue(String, String),
     Flag(String),
     Value(String)
+}
+
+impl Eq for Flag {}
+
+impl PartialEq for Flag {
+    fn eq(&self, othr: &Flag) -> bool{
+        match (&self, othr){
+            (Self::Flag(selfs), Self::Flag(othrs)) | (Self::Value(selfs), Self::Value(othrs)) => {
+                return selfs == othrs;
+            },
+            (Self::KeyValue(selfkey, selfval), Self::KeyValue(othrkey, othrval)) => {
+                return selfkey == othrkey && selfval == othrval;
+            }
+            _ => false
+        }
+    }
 }
 
 impl Flag{
@@ -67,9 +83,6 @@ impl Cli{
         }
         if self.keyvalue.contains_key(input_str){
             return true;
-        }
-        else{
-            GLOBAL_CLI.debug(&format!("[cli.rs]: `{}` couldn't be parsed to flag.", input_str));
         }
         return false;
     }

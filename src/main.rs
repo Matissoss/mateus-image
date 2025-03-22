@@ -15,7 +15,6 @@ use filters::{
     standard    ::StandardFilter    ,
     binary      ::BinaryFilter      ,
     inversion   ::InversionFilter   ,
-    monochrome  ::MonochromeFilter  ,
 };
 
 use cli::{
@@ -25,85 +24,93 @@ use cli::{
 
 use image::{
     self,
-    ImageReader
+    ImageBuffer,
+    Rgb,
+    ImageReader,
 };
 
 use std::{
     path::PathBuf,
+    sync::LazyLock,
     process,
     fs
 };
 
-pub const DEF_SCHEME : [Color; 11] = 
+#[derive(Default, PartialEq)]
+enum RegisteredFilters{
+    #[default]
+    Standard,
+    Median,
+    Mean,
+    Binary,
+    Ascii,
+    Pixel,
+    Stalinsort,
+    Extra1
+}
+
+pub const DEF_SCHEME : [Color; 18] = 
 [
     // bg 
     Color::ctime_hex("121212"),
     Color::ctime_hex("242424"),
     // fg
     Color::ctime_hex("C8C8CC"),
-    Color::ctime_hex("969699"),
+    Color::ctime_hex("AAAAAD"),
     // red
     Color::ctime_hex("C75147"),
+    Color::ctime_hex("662A25"),
     // blue
     Color::ctime_hex("94D3E6"),
+    Color::ctime_hex("6F9FAD"),
     // cyan
-    Color::ctime_hex("A8FECB"),
+    Color::ctime_hex("91FFE9"),
+    Color::ctime_hex("71C7B6"),
     // orange
-    Color::ctime_hex("FDA73C"),
+    Color::ctime_hex("D99E64"),
+    Color::ctime_hex("B88654"),
     // green
     Color::ctime_hex("9BD85F"),
+    Color::ctime_hex("8DBF67"),
     // yellow
-    Color::ctime_hex("E3D050"),
+    Color::ctime_hex("D4B85D"),
+    Color::ctime_hex("B39B4F"),
     // magenta
     Color::ctime_hex("B157D0"),
+    Color::ctime_hex("713885")
 ];
 
-pub const MAIN_HELP     : &str = include_str!("help/help.txt");
+pub static COLORSCHEME : LazyLock<Vec<Color>> = LazyLock::new(|| {
+    if let Some(cfg) = &*config::CONFIG{
+        cfg.colors.clone()
+    }
+    else{
+        DEF_SCHEME.to_vec()
+    }
+});
+
+pub const MAIN_HELP     : &str = include_str!("help/main.txt");
+pub const CONFIG_HELP   : &str = include_str!("help/config.txt");
 
 fn main() {
     let cli = &*GLOBAL_CLI;
-    cli.debug("[main.rs]: initialized CLI");
 
     let mut inpath  : Option<PathBuf>           = None;
     let mut outpath : Option<PathBuf>           = None;
     let mut param   : Option<u16>               = None;
 
-    if let Some(flag) = cli.get_flag("--input"){
+    if let Some(flag) = cli.get_flag("-i"){
         if let Flag::KeyValue(_, path) = flag{
-            cli.debug("[main.rs]: found inpath; --input variant");
             inpath = Some(PathBuf::from(path));
         }
     }
-    else if let Some(flag) = cli.get_flag("-i"){
+    if let Some(flag) = cli.get_flag("-o") {
         if let Flag::KeyValue(_, path) = flag{
-            cli.debug("[main.rs]: found inpath; -i variant");
-            inpath = Some(PathBuf::from(path));
-        }
-    }
-
-    if let Some(flag) = cli.get_flag("--output") {
-        if let Flag::KeyValue(_, path) = flag{
-            cli.debug("[main.rs]: found outpath; --output variant");
             outpath = Some(PathBuf::from(path));
         }
     }
-    else if let Some(flag) = cli.get_flag("-o"){
-        if let Flag::KeyValue(_, path) = flag{
-            cli.debug("[main.rs]: found outpath; -o variant");
-            outpath = Some(PathBuf::from(path));
-        }
-    }
-
-
-    if let Some(flag) = cli.get_flag("--param") {
+    if let Some(flag) = cli.get_flag("-p") {
         if let Flag::KeyValue(_, var) = flag{
-            cli.debug("[main.rs]: found param; --param variant");
-            if let Ok(n) = var.trim().parse::<u16>() {param = Some(n)}
-        }
-    }
-    else if let Some(flag) = cli.get_flag("-p"){
-        if let Flag::KeyValue(_, var) = flag{
-            cli.debug("[main.rs]: found param; -p variant");
             if let Ok(n) = var.trim().parse::<u16>() {param = Some(n)}
         }
     }
@@ -112,93 +119,98 @@ fn main() {
         println!("{}", MAIN_HELP);
         process::exit(0);
     }
-    
-    let cl_scheme : Vec<Color> = if let Some(cfg) = &*config::CONFIG{
-        cfg.colors.clone()
+    if cli.contains_flag("confighelp"){
+        println!("{}", CONFIG_HELP);
+        process::exit(0);
     }
-    else{
-        DEF_SCHEME.to_vec()
+
+    cli.debug(&format!("[main.rs]: colorscheme: {:?}", &*COLORSCHEME));
+
+    let filter : RegisteredFilters = 
+    if      cli.contains_flag("standard")   {   RegisteredFilters::Standard     }
+    else if cli.contains_flag("ascii")      {   RegisteredFilters::Ascii        }
+    else if cli.contains_flag("pixel")      {   RegisteredFilters::Pixel        }
+    else if cli.contains_flag("binary")     {   RegisteredFilters::Binary       }
+    else if cli.contains_flag("extras-1")   {   RegisteredFilters::Extra1       }
+    else if cli.contains_flag("median")     {   RegisteredFilters::Median       }
+    else if cli.contains_flag("mean")       {   RegisteredFilters::Mean         }
+    else if cli.contains_flag("stalinsort") {   RegisteredFilters::Stalinsort   }
+    else                                    {   
+        println!("[main.rs]: unknown option, use `help`"); process::exit(0)                    
     };
 
-    cli.debug("[main.rs]: colorscheme:");
-    for c in &cl_scheme{
-        cli.debug(&format!("{}", c.to_string()));
-    }
-    
-    if let (Some(inpath), Some(param)) = (&inpath, param){
-        if cli.contains_flag("ascii"){
-            convert_image(&inpath, &PathBuf::new(), ASCIIFilter(param), &[]);
-            process::exit(0);
-        }
-    }
-
-    if let (Some(inpath), Some(outpath)) = (inpath, outpath){
-        if cli.contains_flag("standard"){
-            convert_image(&inpath, &outpath, StandardFilter, &cl_scheme);
-        }
-        else if cli.contains_flag("binary"){
-            convert_image(&inpath, &outpath, BinaryFilter, &cl_scheme);
-        }
-        else if cli.contains_flag("monochrome"){
-            convert_image(&inpath, &outpath, MonochromeFilter, &cl_scheme);
-        }
-        else if cli.contains_flag("extras-1"){
-            convert_image(&inpath, &outpath, InversionFilter, &[]);
-        }
-        else{
-            if let Some(param) = param{
-                if      cli.contains_flag("median"){
-                    convert_image(&inpath, &outpath, MedianFilter(param), &cl_scheme)
-                }
-                else if cli.contains_flag("mean") {
-                    convert_image(&inpath, &outpath, MeanFilter(param), &cl_scheme);
-                }
-                else if cli.contains_flag("pixel"){
-                    convert_image(&inpath, &outpath, PixelFilter(param), &cl_scheme);
-                }
-                else if cli.contains_flag("stalinsort"){
-                    convert_image(&inpath, &outpath, StalinsortFilter(param), &cl_scheme);
-                }
-            }
-            else{
-                println!("[main.rs]: --param isn't specified and you tried to use filter that uses it");
-                process::exit(-1);
-            }
-        }
-    }
-    else{
-        println!("[main.rs]: either input path or output path or both haven't been provided. use `help`");
-        process::exit(-1);
-    }
+    convert_image([inpath.as_ref(), outpath.as_ref()], param, &filter, &*COLORSCHEME);
 }
 
-fn convert_image(inpath: &PathBuf, outpath: &PathBuf, filter: impl ChangeImage, color_scheme: &[Color]){
-    let cli = &*GLOBAL_CLI;
-    if let Ok(true) = fs::exists(inpath){
-        if let Ok(img) = ImageReader::open(inpath){
-            match img.decode(){
-                Ok(dynimg) => {
-                    let mut conv_img = dynimg.to_rgb8();
-                    filter.convert_image(&mut conv_img, color_scheme);
-                    if let Err(err) = conv_img.save(outpath){
-                        cli.debug(&format!("[main.rs]: couldn't save image, error:\n{}",err));
-                    } else {
-                        cli.debug(&format!("[main.rs]: sucessfully saved image to {:?}",outpath));
-                    }
-                }
-                Err(err) => {
-                    println!("[main.rs]: failed to decode image:\n{}", err);
-                    process::exit(1);
-                }
-            }
+fn save_img(to_save: &ImageBuffer<Rgb<u8>, Vec<u8>>, path: PathBuf) -> !{
+    match to_save.save(&path){
+        Ok(_) => {
+            println!("[main.rs:save_img] (SUCCESS): image succesfully saved to {:?}", path);
+            process::exit(0);
         }
-        else{
-            println!("[main.rs]: ImageReader couldn't open file {:?}", inpath);
+        Err(err) => {
+            println!("[main.rs:save_img] (ERROR): {}", err);
             process::exit(1);
         }
     }
+}
+
+fn apply_filter(rgb8img: &mut ImageBuffer<Rgb<u8>, Vec<u8>>, filt: &RegisteredFilters, cls: &[Color], param: Option<u16>){
+    match filt {
+        &RegisteredFilters::Standard => {
+            StandardFilter::convert_image(&StandardFilter, rgb8img, cls);
+        }
+        &RegisteredFilters::Pixel => {
+            let uparam = param.unwrap_or(1);
+            PixelFilter::convert_image(&PixelFilter((uparam & 0xFFFF) as u16), rgb8img, cls);
+        }
+        &RegisteredFilters::Mean => {
+            let uparam = param.unwrap_or(1);
+            MeanFilter::convert_image(&MeanFilter((uparam & 0xFFFF) as u16), rgb8img, cls);
+        }
+        &RegisteredFilters::Median => {
+            let uparam = param.unwrap_or(1);
+            MedianFilter::convert_image(&MedianFilter((uparam & 0xFFFF) as u16), rgb8img, cls);
+        }
+        &RegisteredFilters::Binary => {
+            BinaryFilter::convert_image(&BinaryFilter, rgb8img, cls);
+        }
+        &RegisteredFilters::Ascii => {
+            let uparam = param.unwrap_or(1);
+            ASCIIFilter::convert_image(&ASCIIFilter((uparam & 0xFFFF) as u16), rgb8img, &[]);
+            std::process::exit(0);
+        }
+        &RegisteredFilters::Stalinsort => {
+            let uparam = param.unwrap_or(1);
+            StalinsortFilter::convert_image(&StalinsortFilter((uparam & 0xFFFF) as u16), rgb8img, &cls);
+        }
+        &RegisteredFilters::Extra1 => {
+            InversionFilter::convert_image(&InversionFilter, rgb8img, &cls);
+        }
+    }
+}
+
+fn convert_image(iopaths: [Option<&PathBuf>;2], param: Option<u16>, filt: &RegisteredFilters, cls: &[Color]) {
+    if let Ok(true) = fs::exists(   &iopaths[0].unwrap_or(&PathBuf::from("."))  ){
+        match ImageReader::open (   &iopaths[0].unwrap_or(&PathBuf::from("."))  ){
+            Ok(dynimg) => {
+                match dynimg.decode(){
+                    Ok(decoded_img) => {
+                        let mut rgb8_img = decoded_img.to_rgb8();
+                        apply_filter(&mut rgb8_img, filt, cls, param);
+                        save_img(&rgb8_img, iopaths[1].unwrap_or(&PathBuf::from(".")).to_path_buf());
+                    }
+                    Err(error) => {
+                        println!("[main.rs:convert_image] (ERROR): {}", error);
+                    }
+                }
+            },
+            Err(error) => {
+                return println!("[main.rs:convert_image] (ERROR): {}", error);
+            }
+        }
+    }
     else{
-        println!("[main.rs]: image in path {:?} doesn't exist", inpath);
-        process::exit(1);
+        return println!("[main.rs:convert_image] (ERROR): file does not exist!");
     }
 }

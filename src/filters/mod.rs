@@ -8,7 +8,6 @@ pub mod pixel       ;
 pub mod ascii       ;
 pub mod binary      ;
 pub mod inversion   ;
-pub mod monochrome  ;
 
 pub fn quicksort<T>(arr: &[T]) -> Vec<T>
 where T: PartialEq + PartialOrd + Clone{
@@ -26,9 +25,9 @@ where T: PartialEq + PartialOrd + Clone{
             more_than.push(n.clone());
         }
     }
-    quicksort(&mut less_than);
+    less_than = quicksort(&mut less_than);
     less_than.push(pivot.clone());
-    quicksort(&mut more_than);
+    more_than = quicksort(&mut more_than);
     less_than.extend(more_than);
     return less_than;
 }

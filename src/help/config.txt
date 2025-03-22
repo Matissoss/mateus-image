@@ -1,0 +1,42 @@
+mateus-image  v1.5.0
+====================
+[CONFIGURATION HELP]
+
+Configuration is done through `conf.ini` file in `~/.config/mateus-image` directory. 
+To get `~` (aka user directory), mateus-image uses `std::env::home_dir()` function. 
+This type of configuration cannot be done on Windows (because, I do not know standard paths in Windows).
+Hovewer, you can change colors temporarily using `-c` flag which is in [FLAG] section
+
+--------------------
+[SETUP]
+
+```~/.config/mateus-image
+conf.ini
+config.csv
+```
+
+
+```conf.ini
+; comment
+; colors = [HEX COLORS SPLIT BY ',']
+; 	colors = #FF0000,#000000
+; colors_path = [PATH TO COLORS]
+; colors_path = config.csv
+```
+
+```config.csv
+#000000,#FF0000
+```
+; note - config.csv (or any other file specified in colors_path must be in ~/.config/mateus-image
+
+--------------------
+[FLAG]
+Colors can be temporarily changed using `-c` flag, which is useful for custom scripts. 
+The scheme is same as before: hex (or HTML) colors split by ',';
+
+[[EXAMPLE]]
+`mateus-image standard -i=some-file.png -o=output-image.png -c=#FF0000,#000000` - makes colorscheme = [(255,0,0), (0,0,0)]
+
+====================
+made by matissoss
+licensed under MIT

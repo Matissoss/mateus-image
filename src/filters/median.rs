@@ -25,10 +25,10 @@ impl ChangeImage for MedianFilter{
             }
             let sorted = quicksort(&pxs);
             if let Some(px) = sorted.get(sorted.len()/2){
-                *pixel = image::Rgb(px.change_color(&cl_scheme));
+                *pixel = image::Rgb(px.change_color(&cl_scheme).to_arr());
             }
             else{
-                *pixel = image::Rgb(Color::from_arr(&pixel.0).change_color(&cl_scheme));
+                *pixel = image::Rgb(Color::from_arr(&pixel.0).change_color(&cl_scheme).to_arr());
             }
         }
     }

@@ -1,0 +1,26 @@
+mateus-image v1.5.0
+===================
+USAGE: mateus-image [METHOD] [FLAGS]
+-------------------
+[METHOD]:
+help		-	prints this message
+confighelp	-	prints help message for configuration
+standard	-	matches closest color based on colorscheme
+median		-	matches closest color based on median; very slow, use mean
+mean		-	matches closest color based on mathematic mean
+pixel		-	pixelates image based on "-p" flag
+stalinsort	-	makes color either one of X most common colors; where X = "-p" flag
+binary		-	makes color either one of 2 most common colors in image;
+ascii		-	changes image to printable text; echo'es output to terminal
+extra1		-	extra filter I decided that should stay; idk what it does
+
+-------------------
+[FLAGS]:
+-p=[VAL]	-	parameter flag
+-i=[VAL]	-	input  file path
+-o=[VAL]	-	output file path
+--debug		-	gives you more info, recommended if something is unclear
+
+===================
+made by matissoss
+licensed under MIT

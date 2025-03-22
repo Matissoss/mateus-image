@@ -4,7 +4,7 @@
 
 To configure `mateus-image` on Linux there are 2 methods: through flags (temporary) or through config file.
 
-Config file can be found in following directory: `~/.config/mateus-image` named `conf.ini`
+Config file can be found in following directory: `~/.config/mateus-image` (uses `std::env::home_dir()`) named `conf.ini`
 
 **Example conf.ini file**
 ```

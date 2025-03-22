@@ -41,7 +41,7 @@ impl ChangeImage for BinaryFilter{
         cli.debug(&format!("[binary.rs]: max_1 = {}; max_2 = {}",
             max_1.1.to_string(),max_2.to_string()));
         for pixel in img.pixels_mut(){
-            *pixel = image::Rgb(Color::from_arr(&pixel.0).change_color(&[max_1.1, max_2]));
+            *pixel = image::Rgb(Color::from_arr(&pixel.0).change_color(&[max_1.1, max_2]).to_arr());
         }
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name 		= "mateus-image"
-version 	= "1.4.2"
+version 	= "1.5.0"
 edition 	= "2021"
 authors		= ["matissoss <matissossgamedev@proton.me>"]
 description 	= "Simple CLI program for image manipulation"

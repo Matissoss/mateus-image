@@ -19,7 +19,7 @@ impl ChangeImage for MeanFilter{
                     }
                 }
             }
-            *pixel = image::Rgb(Color::avg_rgb(&pxs).change_color(&cl_scheme));
+            *pixel = image::Rgb(Color::avg_rgb(&pxs).change_color(&cl_scheme).to_arr());
         }
     }
 }
